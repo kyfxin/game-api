@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhexinit.gameapi.mapper.BattleRoundStepAttackTargetRecordMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.zhexinit.gameapi.entity.BattleRoundStepAttackTargetRecord">
+        <id column="id" property="id" />
+        <result column="battle_record_id" property="battleRecordId" />
+        <result column="battle_round_id" property="battleRoundId" />
+        <result column="battle_round_step_id" property="battleRoundStepId" />
+        <result column="defence_user_id" property="defenceUserId" />
+        <result column="defence_hero_id" property="defenceHeroId" />
+        <result column="hp_harm" property="hpHarm" />
+        <result column="hp_left" property="hpLeft" />
+        <result column="position" property="position" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, battle_record_id, battle_round_id, battle_round_step_id, defence_user_id, defence_hero_id, hp_harm, hp_left, position, create_time, update_time
+    </sql>
+
+</mapper>

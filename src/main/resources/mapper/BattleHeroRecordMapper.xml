@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhexinit.gameapi.mapper.BattleHeroRecordMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.zhexinit.gameapi.entity.BattleHeroRecord">
+        <id column="id" property="id" />
+        <result column="game_battle_id" property="gameBattleId" />
+        <result column="game_user_id" property="gameUserId" />
+        <result column="game_user_type" property="gameUserType" />
+        <result column="game_hero_id" property="gameHeroId" />
+        <result column="hp" property="hp" />
+        <result column="atk" property="atk" />
+        <result column="def" property="def" />
+        <result column="spd" property="spd" />
+        <result column="position" property="position" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, game_battle_id, game_user_id, game_user_type, game_hero_id, hp, atk, def, spd, position, create_time, update_time
+    </sql>
+
+</mapper>
