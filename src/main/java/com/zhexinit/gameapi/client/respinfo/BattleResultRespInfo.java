@@ -22,5 +22,5 @@ public class BattleResultRespInfo implements Serializable{
 	private BattleChessesRespInfo info;
 	
 	/**战斗中的每一个攻击步骤*/
-	private List<BattleAttackRespInfo> details;
+	private List<BattleAttackRespInfo[]> details;
 }

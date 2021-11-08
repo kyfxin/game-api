@@ -84,14 +84,16 @@ public class GameBattleServiceImpl
 		= new HashMap<Integer, Integer[]>();
 	static {
 		POSITION_ATTACK_ORDER_MAP.put(1, new Integer[] {1, 4, 7, 2, 3, 5, 6, 8, 9});
-		POSITION_ATTACK_ORDER_MAP.put(2, new Integer[] {2, 5, 8, 1, 3, 4, 6, 7, 9});
-		POSITION_ATTACK_ORDER_MAP.put(3, new Integer[] {3, 6, 9, 1, 2, 4, 5, 7, 8});
 		POSITION_ATTACK_ORDER_MAP.put(4, new Integer[] {1, 4, 7, 2, 3, 5, 6, 8, 9});
-		POSITION_ATTACK_ORDER_MAP.put(5, new Integer[] {2, 5, 8, 1, 3, 4, 6, 7, 9});
-		POSITION_ATTACK_ORDER_MAP.put(6, new Integer[] {3, 6, 9, 1, 2, 4, 5, 7, 8});
 		POSITION_ATTACK_ORDER_MAP.put(7, new Integer[] {1, 4, 7, 2, 3, 5, 6, 8, 9});
+		
+		POSITION_ATTACK_ORDER_MAP.put(2, new Integer[] {2, 5, 8, 1, 3, 4, 6, 7, 9});
+		POSITION_ATTACK_ORDER_MAP.put(5, new Integer[] {2, 5, 8, 1, 3, 4, 6, 7, 9});
 		POSITION_ATTACK_ORDER_MAP.put(8, new Integer[] {2, 5, 8, 1, 3, 4, 6, 7, 9});
-		POSITION_ATTACK_ORDER_MAP.put(9, new Integer[] {3, 6, 9, 1, 2, 4, 5, 7, 8});
+		
+		POSITION_ATTACK_ORDER_MAP.put(3, new Integer[] {3, 6, 9, 2, 1, 5, 4, 8, 7});
+		POSITION_ATTACK_ORDER_MAP.put(6, new Integer[] {3, 6, 9, 2, 1, 5, 4, 8, 7});
+		POSITION_ATTACK_ORDER_MAP.put(9, new Integer[] {3, 6, 9, 2, 1, 5, 4, 8, 7});
 	}
 	
 	/**
@@ -184,7 +186,7 @@ public class GameBattleServiceImpl
 				break;
 			}
 		}
-		
+
 		return randomPositions;
 	}
 	
@@ -248,17 +250,19 @@ public class GameBattleServiceImpl
 		chessesRespInfo.setDefender(defender);
 		battleResultRespInfo.setInfo(chessesRespInfo);
 		
-		//战报响应消息中的对战步骤列表
-		List<BattleAttackRespInfo> attackRespInfoList = new ArrayList<>();
-		
 		//将攻击方的列表按照position属性排序，position小的先出手
 		Collections.sort(attackHeroList);
 		//将防守方的列表按照position属性排序，position小的先出手
 		Collections.sort(defenceHeroList);
 		
+		//战报响应消息中的对战步骤列表(所有回合)
+		List<BattleAttackRespInfo[]> attackRespInfoList = new ArrayList<>();
+		
 		//进行回合战斗
 		battleRound(attackHeroList, defenceHeroList, battleRecord, attackRespInfoList);
+		
 		battleResultRespInfo.setDetails(attackRespInfoList);
+
 		
 		return battleResultRespInfo;
 	}
@@ -272,7 +276,7 @@ public class GameBattleServiceImpl
 	 */
 	private void battleRound(List<BattleHeroInfo> attackHeroList, 
 			List<BattleHeroInfo> defenceHeroList, BattleRecord battleRecord, 
-			List<BattleAttackRespInfo> attackRespInfoList) {
+			List<BattleAttackRespInfo[]> attackRespInfoList) {
 		//记录回合数
 		int roundIndex = 1;
 		//胜利方0:打和 1：攻击方  2：防守方
@@ -281,23 +285,8 @@ public class GameBattleServiceImpl
 		//不确定有多少回合的对战，先while(true)，满足条件后再退出
 		while (true) {
 			
-			//攻击英雄列表去除已经挂掉的
-			for (int i = 0; i < attackHeroList.size(); i ++) {
-				BattleHeroInfo attackHero = attackHeroList.get(i);
-				if (attackHero.isAlive() == false) {
-					attackHeroList.remove(i);
-					i--;
-				}
-			}
-			
-			//防守英雄列表去除已经挂掉的
-			for (int i = 0; i < defenceHeroList.size(); i ++) {
-				BattleHeroInfo defenceHero = defenceHeroList.get(i);
-				if (defenceHero.isAlive() == false) {
-					defenceHeroList.remove(i);
-					i -- ;
-				}
-			}
+			//每一回合的战斗结果
+			List<BattleAttackRespInfo> battleAttackRoundRspList = new ArrayList<>();
 			
 			if (attackHeroList.size() == 0 && defenceHeroList.size() == 0) {
 				//打和
@@ -325,7 +314,27 @@ public class GameBattleServiceImpl
 			battleRoundRecordMapper.insertReturnId(battleRoundRecord);
 			
 			//进行回合中每一个步骤的战斗
-			battleRoundStep(attackHeroList, defenceHeroList, battleRecord.getId(), battleRoundRecord.getId(), attackRespInfoList);
+			battleRoundStep(attackHeroList, defenceHeroList, battleRecord.getId(), battleRoundRecord.getId(), battleAttackRoundRspList, roundIndex);
+			
+			//攻击英雄列表去除已经挂掉的
+			for (int i = 0; i < attackHeroList.size(); i ++) {
+				BattleHeroInfo attackHero = attackHeroList.get(i);
+				if (attackHero.isAlive() == false) {
+					attackHeroList.remove(i);
+					i--;
+				}
+			}
+			
+			//防守英雄列表去除已经挂掉的
+			for (int i = 0; i < defenceHeroList.size(); i ++) {
+				BattleHeroInfo defenceHero = defenceHeroList.get(i);
+				if (defenceHero.isAlive() == false) {
+					defenceHeroList.remove(i);
+					i -- ;
+				}
+			}
+			
+			attackRespInfoList.add(battleAttackRoundRspList.toArray(new BattleAttackRespInfo[battleAttackRoundRspList.size()]));
 			
 			roundIndex ++ ;
 		} //while(true) 循环结束
@@ -345,13 +354,14 @@ public class GameBattleServiceImpl
 	 * @param attackRespInfoList 战报响应消息中的对战步骤列表,用于记录对战步骤返回给客户端
 	 */
 	private void battleRoundStep(List<BattleHeroInfo> attackHeroList, List<BattleHeroInfo> defenceHeroList, 
-			int battleRecordId, int battleRoundRecordId, List<BattleAttackRespInfo> attackRespInfoList) {
+			int battleRecordId, int battleRoundRecordId, List<BattleAttackRespInfo> attackRespInfoList, int roundIndex) {
+		
 		//计算攻击方英雄的速度和
 		Optional<Integer> attackSpeedSum = attackHeroList.stream().map(BattleHeroInfo::getSpd).reduce(Integer::sum);
 		//计算防守方英雄的速度和
 		Optional<Integer> defenceSpeedSum = defenceHeroList.stream().map(BattleHeroInfo::getSpd).reduce(Integer::sum);
 		
-		//出手顺序  0：攻击方  1：防守方 ,默认攻击方先出手
+		//出手顺序  0：攻击方  1：防守方 ,速度和相同则攻击方先出手
 		int startAttackUserType = 0;
 		
 		if (attackSpeedSum.isPresent() && defenceSpeedSum.isPresent()) {
@@ -361,63 +371,161 @@ public class GameBattleServiceImpl
 			} 
 		}
 		
-		//获取攻守双方的英雄数量
-		int attackHeroCount = attackHeroList.size();
-		int defenceHeroCount = defenceHeroList.size();
+		//每一个攻击循环中的步骤序号
+		int attackStep = 0;
 		
-		//对战双方的英雄数量可能相等也可能不等，为了每个英雄都能出手一次，总的遍历次数是双方英雄数量的和。但如果双方英雄数不一致，根据较少的一方设定遍历的基准数。
-		//遍历的基准数
-		int allNeedCycleIndex = 0;
-		if (attackHeroCount >= defenceHeroCount) {
-			allNeedCycleIndex = 2 * defenceHeroCount;
-		} else {
-			allNeedCycleIndex = 2 * attackHeroCount;
-		}
+		//遍历攻守双方英雄列表使用的索引
+		int attackHeroIndex = 0;
+		int defenceHeroIndex = 0;
 		
-		//每个回合攻守双方的英雄都有出手的机会，所以循环是两个列表元素个数的和
-		for (int i = 0; i < (attackHeroCount + defenceHeroCount); i ++) {
-			//如攻击方3个，防守1个时，for循环总共遍历4次，但从第3次开始，就只需要遍历攻击方的英雄列表
-			if (i < allNeedCycleIndex) {
+		while (true) {
+			if (attackHeroIndex >= attackHeroList.size() && defenceHeroIndex >= defenceHeroList.size()) {
+				break;
+			}
+			
+			if (attackHeroIndex >= attackHeroList.size() && defenceHeroIndex < defenceHeroList.size()) {
+				//攻击方的英雄出战完毕，防守方的英雄还有未出战的，还需要处理防守方未出战的英雄
+				BattleHeroInfo attackHero = null;
+				while (true) {
+					if (defenceHeroIndex >= defenceHeroList.size()) {
+						break;
+					}
+					
+					attackHero = defenceHeroList.get(defenceHeroIndex);
+					
+					defenceHeroIndex ++;
+					
+					if (attackHero.isAlive() == true) {
+						break;
+					}
+					
+					
+				}
+				
+				if (null != attackHero) {
+					attack(attackHero, attackHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.DEFENCE_USER.value(), attackRespInfoList, roundIndex);
+				}
+				
+			} else if (defenceHeroIndex >= defenceHeroList.size() && attackHeroIndex < attackHeroList.size()) {
+				//防守方的英雄已出战完毕，攻击方的英雄还有未出战的，还需要处理攻击方的未出战的英雄
+				
+				BattleHeroInfo attackHero = null;
+				while (true) {
+					if (attackHeroIndex >= attackHeroList.size()) {
+						break;
+					}
+					attackHero = attackHeroList.get(attackHeroIndex);
+					
+					attackHeroIndex ++;
+					
+					if (attackHero.isAlive() == true) {
+						break;
+					}
+					
+				}
+				
+				if (null != attackHero) {
+					attack(attackHero, defenceHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.ATTACK_USER.value(), attackRespInfoList, roundIndex);
+				}
+				
+			} else {
+				//攻击两方都有英雄要出战时，按照出战顺序依次出手
 				if (startAttackUserType == UserTypeEnum.ATTACK_USER.value()) {
 					//攻击方先出手
 					//i为偶数时遍历攻击方的英雄列表(攻击方先出手，则最先需要遍历攻击方的英雄列表)
-					if (i % 2 == 0) {
-						BattleHeroInfo attackHero = attackHeroList.get(i / 2);
-						attack(attackHero, defenceHeroList, battleRecordId, battleRoundRecordId, i, UserTypeEnum.ATTACK_USER.value(), attackRespInfoList);
+					if (attackStep % 2 == 0) {
+						BattleHeroInfo attackHero = null;
+						while (true) {
+							if (attackHeroIndex >= attackHeroList.size()) {
+								break;
+							}
+							attackHero = attackHeroList.get(attackHeroIndex);
+							
+							attackHeroIndex ++;
+							
+							if (attackHero.isAlive() == true) {
+								break;
+							}
+						}
+						
+						if (null != attackHero) {
+							attack(attackHero, defenceHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.ATTACK_USER.value(), attackRespInfoList, roundIndex);
+						}
+						
 					}
 					//i为奇数时遍历防守方的英雄列表
-					if (i % 2 == 1) {
-						BattleHeroInfo attackHero = defenceHeroList.get(i / 2);
-						attack(attackHero, attackHeroList, battleRecordId, battleRoundRecordId, i, UserTypeEnum.DEFENCE_USER.value(), attackRespInfoList);
+					if (attackStep % 2 == 1) {
+						BattleHeroInfo attackHero = null;
+						while (true) {
+							if (defenceHeroIndex >= defenceHeroList.size()) {
+								break;
+							}
+							
+							attackHero = defenceHeroList.get(defenceHeroIndex);
+							
+							defenceHeroIndex ++;
+							
+							if (attackHero.isAlive() == true) {
+								break;
+							}
+							
+						}
+						
+						if (null != attackHero) {
+							attack(attackHero, attackHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.DEFENCE_USER.value(), attackRespInfoList, roundIndex);
+						}
 					}
 					
 				} else {
 					//防守方先出手
 					//i为偶数时遍历防守方的英雄列表(防守方先出手，则最先需要遍历防守方的英雄列表)
-					if (i % 2 == 0) {
-						BattleHeroInfo attackHero = defenceHeroList.get(i / 2);
-						attack(attackHero, attackHeroList, battleRecordId, battleRoundRecordId, i, UserTypeEnum.DEFENCE_USER.value(), attackRespInfoList);
+					if (attackStep % 2 == 0) {
+						BattleHeroInfo attackHero = null;
+						while (true) {
+							if (defenceHeroIndex >= defenceHeroList.size()) {
+								break;
+							}
+							
+							attackHero = defenceHeroList.get(defenceHeroIndex);
+							
+							defenceHeroIndex ++;
+							
+							if (attackHero.isAlive() == true) {
+								break;
+							}
+							
+						}
+						
+						if (null != attackHero) {
+							attack(attackHero, attackHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.DEFENCE_USER.value(), attackRespInfoList, roundIndex);
+						}
 					}
-					//i为奇数时遍历防守方的英雄列表
-					if (i % 2 == 1) {
-						BattleHeroInfo attackHero = attackHeroList.get(i / 2);
-						attack(attackHero, defenceHeroList, battleRecordId, battleRoundRecordId, i, UserTypeEnum.ATTACK_USER.value(), attackRespInfoList);
+					//i为奇数时遍历攻击方的英雄列表
+					if (attackStep % 2 == 1) {
+						BattleHeroInfo attackHero = null;
+						while (true) {
+							if (attackHeroIndex >= attackHeroList.size()) {
+								break;
+							}
+							attackHero = attackHeroList.get(attackHeroIndex);
+							
+							attackHeroIndex ++;
+							
+							if (attackHero.isAlive() == true) {
+								break;
+							}
+						}
+						
+						if (null != attackHero) {
+							attack(attackHero, defenceHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.ATTACK_USER.value(), attackRespInfoList, roundIndex);
+						}
 					}
-				}
-			} else {
-				if (attackHeroCount > defenceHeroCount) {
-					//攻击方的英雄数量多，需要处理攻击方多出来的英雄数量
-					BattleHeroInfo attackHero = attackHeroList.get(i - defenceHeroCount);
-					attack(attackHero, defenceHeroList, battleRecordId, battleRoundRecordId, i, UserTypeEnum.ATTACK_USER.value(), attackRespInfoList);
-				} else {
-					//防守方的英雄数量多，需要处理防守方多出来的英雄数量
-					BattleHeroInfo attackHero = defenceHeroList.get(i - attackHeroCount);
-					attack(attackHero, attackHeroList, battleRecordId, battleRoundRecordId, i, UserTypeEnum.DEFENCE_USER.value(), attackRespInfoList);
 				}
 			}
-		}
-		
-		
+			
+			attackStep ++;
+			
+		} //while (true)循环结束
 	}
 	
 	/**
@@ -435,7 +543,7 @@ public class GameBattleServiceImpl
 	 */
 	private void attack(BattleHeroInfo attackHero, List<BattleHeroInfo> defenceHeroList, 
 			int battleRecordId, int battleRoundRecordId, int step, int attackUserType, 
-			List<BattleAttackRespInfo> attackRespInfoList) {
+			List<BattleAttackRespInfo> attackRespInfoList, int roundIndex) {
 		
 		if (attackHero.isAlive() == false) {
 			//出手是
@@ -475,6 +583,10 @@ public class GameBattleServiceImpl
 		
 		//记录被攻击的英雄在列表中的位置，受到攻击后需要修改列表中对象属性
 		int defenceHeroIndex = 0;
+		
+		if (attackOrder == null) {
+			System.out.println("position =" + position  + ", attackOrder is null....");
+		}
 		
 		for (int i = 0; i < attackOrder.length; i ++) {
 			//被攻击英雄的位置
@@ -528,7 +640,7 @@ public class GameBattleServiceImpl
 			attackTargetRespList.add(attackTargetRespInfo);
 		} else {
 			//表示受攻击的对象已经挂了，暂时不处理。如2打1的情况，第一个英雄已经把对方打挂了，第二个英雄出手就无对象可打
-			log.info("战斗id{}, 第{}回合的第{}步攻击, 发起攻击位置{}, 防御方已无英雄可对战", battleRecordId, battleRoundRecordId, step, position);
+			log.info("战斗id：{}, 第{}回合的第{}步攻击, 发起攻击位置{}, 防御方已无英雄可对战", battleRecordId, roundIndex, step, position);
 		}
 		
 		attackRespInfo.setTargets(attackTargetRespList);
