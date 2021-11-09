@@ -53,6 +53,9 @@ public class BattleRoundStepRecord extends Model<BattleRoundStepRecord> {
     @ApiModelProperty(value = "攻击技能 0：普通攻击")
     private Integer attackSkill;
 
+    @ApiModelProperty(value = "攻击英雄剩余的怒气")
+    private Integer attackHeroFuryLeft;
+
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;
 

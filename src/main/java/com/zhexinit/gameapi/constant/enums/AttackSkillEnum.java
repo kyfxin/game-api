@@ -6,7 +6,8 @@ package com.zhexinit.gameapi.constant.enums;
  *
  */
 public enum AttackSkillEnum {
-	COMMON(0, "普通攻击");
+	COMMON(0, "普通攻击"),
+	THREE_HUNDRED_HURT(1, "对目标造成300%攻击伤害");
 	
 	private int type;
 	private String desc;

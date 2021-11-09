@@ -140,6 +140,7 @@ public class GameBattleServiceImpl
 			BattleHeroInfo battleHeroInfo = battleHeroList.get(i);
 			battleHeroInfo.setPosition(position);
 			battleHeroInfo.setHp_left(battleHeroInfo.getHp());
+			battleHeroInfo.setFury_left(battleHeroInfo.getFury());
 			
 			BattleChessRespInfo respInfo = new BattleChessRespInfo();
 			BeanUtils.copyProperties(battleHeroInfo, respInfo);
@@ -153,7 +154,7 @@ public class GameBattleServiceImpl
 			battleHeroRecord.setBattleRecordId(battleRecordId);
 			battleHeroRecord.setUserType(userType);
 			battleHeroRecord.setHeroId(battleHeroInfo.getId());
-			battleHeroRecord.setPosition(position);
+//			battleHeroRecord.setPosition(position);
 			battleHeroRecord.setCreateTime(now);
 			battleHeroRecord.setUpdateTime(now);
 			
@@ -403,7 +404,11 @@ public class GameBattleServiceImpl
 				}
 				
 				if (null != attackHero) {
-					attack(attackHero, attackHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.DEFENCE_USER.value(), attackRespInfoList, roundIndex);
+					if (attackHero.getFury_left() < 100) {
+						attack(attackHero, attackHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.DEFENCE_USER.value(), attackRespInfoList, roundIndex);
+					} else {
+						skillAttack(attackHero, attackHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.DEFENCE_USER.value(), attackRespInfoList, roundIndex);
+					}
 				}
 				
 			} else if (defenceHeroIndex >= defenceHeroList.size() && attackHeroIndex < attackHeroList.size()) {
@@ -425,7 +430,12 @@ public class GameBattleServiceImpl
 				}
 				
 				if (null != attackHero) {
-					attack(attackHero, defenceHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.ATTACK_USER.value(), attackRespInfoList, roundIndex);
+					if (attackHero.getFury_left() < 100) {
+						attack(attackHero, defenceHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.ATTACK_USER.value(), attackRespInfoList, roundIndex);
+					} else {
+						skillAttack(attackHero, defenceHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.ATTACK_USER.value(), attackRespInfoList, roundIndex);
+					}
+					
 				}
 				
 			} else {
@@ -449,7 +459,12 @@ public class GameBattleServiceImpl
 						}
 						
 						if (null != attackHero) {
-							attack(attackHero, defenceHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.ATTACK_USER.value(), attackRespInfoList, roundIndex);
+							if (attackHero.getFury_left() < 100) {
+								attack(attackHero, defenceHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.ATTACK_USER.value(), attackRespInfoList, roundIndex);
+							} else {
+								skillAttack(attackHero, defenceHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.ATTACK_USER.value(), attackRespInfoList, roundIndex);
+							}
+							
 						}
 						
 					}
@@ -472,7 +487,12 @@ public class GameBattleServiceImpl
 						}
 						
 						if (null != attackHero) {
-							attack(attackHero, attackHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.DEFENCE_USER.value(), attackRespInfoList, roundIndex);
+							if (attackHero.getFury_left()  < 100 ) {
+								attack(attackHero, attackHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.DEFENCE_USER.value(), attackRespInfoList, roundIndex);
+							} else {
+								skillAttack(attackHero, attackHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.DEFENCE_USER.value(), attackRespInfoList, roundIndex);
+							}
+							
 						}
 					}
 					
@@ -497,7 +517,12 @@ public class GameBattleServiceImpl
 						}
 						
 						if (null != attackHero) {
-							attack(attackHero, attackHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.DEFENCE_USER.value(), attackRespInfoList, roundIndex);
+							if (attackHero.getFury_left() < 100) {
+								attack(attackHero, attackHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.DEFENCE_USER.value(), attackRespInfoList, roundIndex);
+							} else {
+								skillAttack(attackHero, attackHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.DEFENCE_USER.value(), attackRespInfoList, roundIndex);
+							}
+							
 						}
 					}
 					//i为奇数时遍历攻击方的英雄列表
@@ -517,7 +542,12 @@ public class GameBattleServiceImpl
 						}
 						
 						if (null != attackHero) {
-							attack(attackHero, defenceHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.ATTACK_USER.value(), attackRespInfoList, roundIndex);
+							if (attackHero.getFury_left() < 100) {
+								attack(attackHero, defenceHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.ATTACK_USER.value(), attackRespInfoList, roundIndex);
+							} else {
+								skillAttack(attackHero, defenceHeroList, battleRecordId, battleRoundRecordId, attackStep, UserTypeEnum.ATTACK_USER.value(), attackRespInfoList, roundIndex);
+							}
+							
 						}
 					}
 				}
@@ -529,7 +559,7 @@ public class GameBattleServiceImpl
 	}
 	
 	/**
-	 * 每一手的攻击
+	 * 每一手的攻击，普通攻击
 	 * 1、先获取攻击方英雄在9宫格上的位置
 	 * 2、获取当前位置对应的攻击顺序
 	 * 3、根据攻击顺序，选择防守方指定位置的英雄进行攻击
@@ -550,22 +580,10 @@ public class GameBattleServiceImpl
 			return;
 		}
 		
+		LocalDateTime now = LocalDateTime.now();
+		
 		//攻击者在九宫格上的位置
 		int position = attackHero.getPosition();
-		
-		BattleRoundStepRecord battleRoundStepRecord = new BattleRoundStepRecord();
-		battleRoundStepRecord.setBattleRecordId(battleRecordId);
-		battleRoundStepRecord.setBattleRoundId(battleRoundRecordId);
-		battleRoundStepRecord.setStep(step);
-		battleRoundStepRecord.setAttackUserId(attackHero.getUserId());
-		battleRoundStepRecord.setAttackHeroId(attackHero.getId());
-		battleRoundStepRecord.setAttackPosition(attackHero.getPosition());
-		battleRoundStepRecord.setAttackSkill(AttackSkillEnum.COMMON.value());
-		
-		LocalDateTime now = LocalDateTime.now();
-		battleRoundStepRecord.setCreateTime(now);
-		battleRoundStepRecord.setUpdateTime(now);
-		roundStepRecordMapper.insertReturnId(battleRoundStepRecord);
 		
 		BattleAttackRespInfo attackRespInfo = new BattleAttackRespInfo();
 		attackRespInfo.setHolder(attackUserType);
@@ -583,10 +601,6 @@ public class GameBattleServiceImpl
 		
 		//记录被攻击的英雄在列表中的位置，受到攻击后需要修改列表中对象属性
 		int defenceHeroIndex = 0;
-		
-		if (attackOrder == null) {
-			System.out.println("position =" + position  + ", attackOrder is null....");
-		}
 		
 		for (int i = 0; i < attackOrder.length; i ++) {
 			//被攻击英雄的位置
@@ -608,7 +622,13 @@ public class GameBattleServiceImpl
 		} //for (int i = 0; i < attackOrder.length; i ++)循环结束
 			
 		if (defenceHero != null) {
-			//每一次收到的伤害等于攻击方的攻击减去防御方的防御
+			//攻击方的怒气值 +26
+			attackHero.setFury_left(attackHero.getFury_left() + 26);
+			
+			//插入回合记录，并返回记录对应的id
+			int battleRoundStepRecordId = insertBattleRoundStepRecord(battleRecordId, battleRoundRecordId, step, AttackSkillEnum.COMMON.value(), attackHero, now);
+			
+			//每一次受到的伤害等于攻击方的攻击减去防御方的防御
 			Integer hp_harm = attackHero.getAtk() - defenceHero.getDef();
 			Integer hp_left = defenceHero.getHp_left() - hp_harm;
 			
@@ -618,20 +638,10 @@ public class GameBattleServiceImpl
 			if (waitUpdateHero.getHp_left() <= 0) {
 				waitUpdateHero.setAlive(false);
 			}
+			//防守方的怒气值+26
+			waitUpdateHero.setFury_left(waitUpdateHero.getFury_left() + 26);
 			
-			BattleRoundStepAttackTargetRecord attackTargetRecord =new BattleRoundStepAttackTargetRecord();
-			attackTargetRecord.setBattleRecordId(battleRecordId);
-			attackTargetRecord.setBattleRoundId(battleRoundRecordId);
-			attackTargetRecord.setBattleRoundStepId(battleRoundStepRecord.getId());
-			attackTargetRecord.setDefenceUserId(defenceHero.getUserId());
-			attackTargetRecord.setDefenceHeroId(defenceHero.getId());
-			attackTargetRecord.setHpHarm(hp_harm);
-			attackTargetRecord.setHpLeft(hp_left);
-			attackTargetRecord.setPosition(defenceHero.getPosition());
-			attackTargetRecord.setCreateTime(now);
-			attackTargetRecord.setUpdateTime(now);
-			
-			roundStepAttackTargetRecordMapper.insert(attackTargetRecord);
+			insertBattleRoundStepAttackTarget(battleRecordId, battleRoundRecordId, battleRoundStepRecordId, waitUpdateHero, now);
 			
 			BattleAttackTargetRespInfo attackTargetRespInfo = new BattleAttackTargetRespInfo();
 			attackTargetRespInfo.setRole(defenceHero.getPosition());
@@ -645,7 +655,165 @@ public class GameBattleServiceImpl
 		
 		attackRespInfo.setTargets(attackTargetRespList);
 		attackRespInfoList.add(attackRespInfo);
-			
 	
+	}
+	
+	/**
+	 * 每一手的攻击，使用技能攻击（3倍伤害）
+	 * 1、先获取攻击方英雄在9宫格上的位置
+	 * 2、获取当前位置对应的攻击顺序
+	 * 3、根据攻击顺序，选择防守方指定位置的英雄进行攻击
+	 * @param attackHero   发起攻击的英雄
+	 * @param defenceHeroList   防守方的英雄列表
+	 * @param battleRecordId  对战的记录id
+	 * @param battleRoundRecordId  对战的回合记录id
+	 * @param step 每一个回合中的第几步攻击
+	 * @param attackUserType 发起攻击的用户类型 0 ： 攻击方  1：防守方
+	 * @param attackRespInfoList 战报响应消息中的对战步骤列表,用于记录对战步骤返回给客户端
+	 */
+	private void skillAttack(BattleHeroInfo attackHero, List<BattleHeroInfo> defenceHeroList, 
+			int battleRecordId, int battleRoundRecordId, int step, int attackUserType, 
+			List<BattleAttackRespInfo> attackRespInfoList, int roundIndex) {
+		
+		if (attackHero.isAlive() == false) {
+			//出手是
+			return;
+		}
+		
+		LocalDateTime now = LocalDateTime.now();
+		
+		//攻击者在九宫格上的位置
+		int position = attackHero.getPosition();
+		
+		BattleAttackRespInfo attackRespInfo = new BattleAttackRespInfo();
+		attackRespInfo.setHolder(attackUserType);
+		attackRespInfo.setRole(position);
+		attackRespInfo.setSkillId(AttackSkillEnum.THREE_HUNDRED_HURT.value());
+		
+		List<BattleAttackTargetRespInfo> attackTargetRespList = new ArrayList<>();
+		
+		
+		//根据位置获取攻击防守者的顺序
+		Integer[] attackOrder = POSITION_ATTACK_ORDER_MAP.get(position);
+		
+		//被攻击的英雄
+		BattleHeroInfo defenceHero = null;
+		
+		//记录被攻击的英雄在列表中的位置，受到攻击后需要修改列表中对象属性
+		int defenceHeroIndex = 0;
+		
+		for (int i = 0; i < attackOrder.length; i ++) {
+			//被攻击英雄的位置
+			int attackPosition = attackOrder[i];
+			
+			for (int j = 0; j < defenceHeroList.size(); j ++) {
+				BattleHeroInfo heroInfo = defenceHeroList.get(j);
+				//根据被攻击的位置查找被攻击的对象
+				if (attackPosition == heroInfo.getPosition() && heroInfo.isAlive()) {
+					defenceHero = heroInfo;
+					defenceHeroIndex = j;
+					break;
+				}
+			}
+			
+			if (defenceHero != null) {
+				break;
+			}
+		} //for (int i = 0; i < attackOrder.length; i ++)循环结束
+			
+		if (defenceHero != null) {
+			//攻击方的怒气值清0
+			attackHero.setFury_left(0);
+			
+			//插入回合记录，并返回记录对应的id
+			int battleRoundStepRecordId = insertBattleRoundStepRecord(battleRecordId, battleRoundRecordId, step, AttackSkillEnum.THREE_HUNDRED_HURT.value(), attackHero, now);
+			
+			//每一次收到的伤害等于攻击方的攻击减去防御方的防御
+			Integer hp_harm = (attackHero.getAtk() - defenceHero.getDef()) * 3;
+			Integer hp_left = defenceHero.getHp_left() - hp_harm;
+			
+			BattleHeroInfo waitUpdateHero = defenceHeroList.get(defenceHeroIndex);
+			waitUpdateHero.setHp_harm(hp_harm);
+			waitUpdateHero.setHp_left(hp_left);
+			if (waitUpdateHero.getHp_left() <= 0) {
+				waitUpdateHero.setAlive(false);
+			}
+			//防守方的怒气值+26
+			waitUpdateHero.setFury_left(waitUpdateHero.getFury_left() + 26);
+			
+			insertBattleRoundStepAttackTarget(battleRecordId, battleRoundRecordId, battleRoundStepRecordId, waitUpdateHero, now);
+			
+			BattleAttackTargetRespInfo attackTargetRespInfo = new BattleAttackTargetRespInfo();
+			attackTargetRespInfo.setRole(defenceHero.getPosition());
+			attackTargetRespInfo.setDmg(hp_harm);
+			
+			attackTargetRespList.add(attackTargetRespInfo);
+		} else {
+			//表示受攻击的对象已经挂了，暂时不处理。如2打1的情况，第一个英雄已经把对方打挂了，第二个英雄出手就无对象可打
+			log.info("战斗id：{}, 第{}回合的第{}步攻击, 发起攻击位置{}, 防御方已无英雄可对战", battleRecordId, roundIndex, step, position);
+		}
+		
+		attackRespInfo.setTargets(attackTargetRespList);
+		attackRespInfoList.add(attackRespInfo);
+	
+	}
+	
+	
+	
+	/**
+	 * 插入回合中，每一步战斗的记录
+	 * @param battleRecordId        战斗的记录id
+	 * @param battleRoundRecordId   战斗的回合记录id
+	 * @param step                  战斗的步骤0,1,2...
+	 * @param skillId               使用的技能
+	 * @param attackHero            发起攻击的英雄
+	 * @param now
+	 * @return 插入记录的id
+	 */
+	private int insertBattleRoundStepRecord(int battleRecordId, int battleRoundRecordId, 
+			int step, int skillId, BattleHeroInfo attackHero, LocalDateTime now) {
+		BattleRoundStepRecord battleRoundStepRecord = new BattleRoundStepRecord();
+		battleRoundStepRecord.setBattleRecordId(battleRecordId);
+		battleRoundStepRecord.setBattleRoundId(battleRoundRecordId);
+		battleRoundStepRecord.setStep(step);
+		battleRoundStepRecord.setAttackUserId(attackHero.getUserId());
+		battleRoundStepRecord.setAttackHeroId(attackHero.getId());
+		battleRoundStepRecord.setAttackPosition(attackHero.getPosition());
+		battleRoundStepRecord.setAttackSkill(skillId);
+		battleRoundStepRecord.setAttackHeroFuryLeft(attackHero.getFury_left());
+		
+		battleRoundStepRecord.setCreateTime(now);
+		battleRoundStepRecord.setUpdateTime(now);
+		int insertRow = roundStepRecordMapper.insertReturnId(battleRoundStepRecord);
+		int returnId = battleRoundStepRecord.getId();
+		return returnId;
+	}
+	
+	/**
+	 * 插入攻击对象，返回插入影响的记录条数
+	 * @param battleRecordId
+	 * @param battleRoundRecordId
+	 * @param battleRoundStepRecordId
+	 * @param defenceHero
+	 * @param now
+	 * @return
+	 */
+	private int insertBattleRoundStepAttackTarget(int battleRecordId, int battleRoundRecordId, 
+			int battleRoundStepRecordId, BattleHeroInfo defenceHero, LocalDateTime now) {
+		BattleRoundStepAttackTargetRecord attackTargetRecord =new BattleRoundStepAttackTargetRecord();
+		attackTargetRecord.setBattleRecordId(battleRecordId);
+		attackTargetRecord.setBattleRoundId(battleRoundRecordId);
+		attackTargetRecord.setBattleRoundStepId(battleRoundStepRecordId);
+		attackTargetRecord.setDefenceUserId(defenceHero.getUserId());
+		attackTargetRecord.setDefenceHeroId(defenceHero.getId());
+		attackTargetRecord.setHpHarm(defenceHero.getHp_harm());
+		attackTargetRecord.setHpLeft(defenceHero.getHp_left());
+		attackTargetRecord.setPosition(defenceHero.getPosition());
+		attackTargetRecord.setDefenceHeroFuryLeft(defenceHero.getFury_left());
+		attackTargetRecord.setCreateTime(now);
+		attackTargetRecord.setUpdateTime(now);
+		
+		int insertRow = roundStepAttackTargetRecordMapper.insert(attackTargetRecord);
+		return insertRow;
 	}
 }

@@ -50,6 +50,12 @@ public class BattleHeroInfo implements Serializable, Comparable<BattleHeroInfo> 
     /**剩余生命值*/
     private Integer hp_left;
     
+    /**英雄初始怒气值*/
+    private Integer fury;
+    
+    /**英雄当前剩余的怒气值*/
+    private Integer fury_left;
+    
     /**英雄是否还存活 true：存活  false：挂了*/
     private boolean isAlive = true;
 

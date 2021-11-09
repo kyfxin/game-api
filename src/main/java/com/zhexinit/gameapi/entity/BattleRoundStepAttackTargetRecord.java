@@ -53,6 +53,9 @@ public class BattleRoundStepAttackTargetRecord extends Model<BattleRoundStepAtta
     @ApiModelProperty(value = "被攻击的位置 1-9")
     private Integer position;
 
+    @ApiModelProperty(value = "防守英雄剩余的怒气")
+    private Integer defenceHeroFuryLeft;
+
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;
 

@@ -47,6 +47,9 @@ public class HeroInfo extends Model<HeroInfo> {
     @ApiModelProperty(value = "速度")
     private Integer spd;
 
+    @ApiModelProperty(value = "英雄初始怒气值")
+    private Integer fury;
+
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;
 

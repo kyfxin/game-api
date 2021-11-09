@@ -5,26 +5,27 @@
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.zhexinit.gameapi.entity.BattleRoundStepRecord">
         <id column="id" property="id" />
-        <result column="game_battle_id" property="gameBattleId" />
-        <result column="game_battle_round_id" property="gameBattleRoundId" />
+        <result column="battle_record_id" property="battleRecordId" />
+        <result column="battle_round_id" property="battleRoundId" />
         <result column="step" property="step" />
         <result column="attack_user_id" property="attackUserId" />
         <result column="attack_hero_id" property="attackHeroId" />
         <result column="attack_position" property="attackPosition" />
         <result column="attack_skill" property="attackSkill" />
+        <result column="attack_hero_fury_left" property="attackHeroFuryLeft" />
         <result column="create_time" property="createTime" />
         <result column="update_time" property="updateTime" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id, game_battle_id, game_battle_round_id, step, attack_user_id, attack_hero_id, attack_position, attack_skill, create_time, update_time
+        id, battle_record_id, battle_round_id, step, attack_user_id, attack_hero_id, attack_position, attack_skill, attack_hero_fury_left, create_time, update_time
     </sql>
     
     <!-- 插入战斗回合每一个攻击步骤记录，并返记录的id -->
     <insert id="insertReturnId" parameterType="com.zhexinit.gameapi.entity.BattleRoundStepRecord" useGeneratedKeys="true" keyProperty="id">
-	  insert into battle_round_step_record(battle_record_id, battle_round_id, step, attack_user_id, attack_hero_id, attack_position, attack_skill, create_time, update_time ) 
-	  values(#{battleRecordId}, #{battleRoundId}, #{step}, #{attackUserId}, #{attackHeroId}, #{attackPosition}, #{attackSkill}, #{createTime}, #{updateTime})
+	  insert into battle_round_step_record(battle_record_id, battle_round_id, step, attack_user_id, attack_hero_id, attack_position, attack_skill, attack_hero_fury_left, create_time, update_time ) 
+	  values(#{battleRecordId}, #{battleRoundId}, #{step}, #{attackUserId}, #{attackHeroId}, #{attackPosition}, #{attackSkill}, #{attackHeroFuryLeft}, #{createTime}, #{updateTime})
 	</insert>
 
 </mapper>
